@@ -1,0 +1,2 @@
+# comments
+运行于Cloudflare Workers的评论系统，使用KV存储数据，提交评论需要hCaptcha人机验证防止滥用
