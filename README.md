@@ -5,7 +5,7 @@
 
 我在做我的[静态博客](https://itman-terminal.pages.dev/)，想着静态博客，缺个评论区，于是就做了一个；网页部分，我实在不会，于是就用AI做了个前端页面，感觉...还行（？
 
-![主页](home.PNG)
+![主页](home.png)
 
 ## 已经实现的功能
 
@@ -16,14 +16,13 @@
 - 对于还未开放的评论区，禁止评论
 - 点赞功能
 - 楼中楼关系的显示（下图）
-![楼中楼](lzl.PNG)
+![楼中楼](lzl.png)
 
 ## 未来计划（？
 
 下面是一些将来计划的功能（但估计一咕就是很久很久了hh，将来会慢慢还愿的
 
 - 评论使用Markdown回复
-- 收到评论使用Telegram, Discord之类的进行推送
 - 站长后台管理面板
 - 其他，issue区域提出（？
 
@@ -55,10 +54,26 @@
 # 使用
 ## 新建评论区
 对下方路径POST：
-`xxx.workers.dev/api/new/{ADMIN_UUID}/{article_path}`
+`xxx.workers.dev/api/new/{ADMIN_SUBMIT_UUID}/{article_path}`
 
-这里的`{ADMIN_UUID}`就是注释里面写的站长提交ID。`{article_path}`为开放的评论区，转到`http://xxx.workers.dev/?article={article_path}`即可评论
+这里的`{ADMIN_SUBMIT_UUID}`就是注释里面写的站长提交ID。`{article_path}`为开放的评论区，转到`http://xxx.workers.dev/?article={article_path}`即可评论
 
 ## 如何作为站长发布评论？
 
-将昵称填入为{ADMIN_UUID}即可
+将昵称填入为`{ADMIN_SUBMIT_UUID}`即可
+
+## 更新：使用Telegram Bot推送新评论
+
+此功能为可选功能。
+
+### 创建Bot
+
+网上找教程，不多赘述。
+
+### 设置环境变量
+
+转到Workers项目 --> `设置` --> `变量与机密`
+
+创建`TELEGRAM_BOT_TOKEN`，类型选机密，填入你的Bot Token
+
+创建`TELEGRAM_CHAT_ID`，类型选文本，填入聊天ID（私聊就填用户ID，用户需要先使用Bot;群组需要加入;频道的话需要开启权限，自己找教程）

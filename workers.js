@@ -1,10 +1,10 @@
-﻿// 定义 KV 命名空间绑定
+// 定义 KV 命名空间绑定
 const BLOG_COMMENTS = "BLOG_COMMENTS";
 
-// 站长标识（前端提交时的特殊标识）
+// 站长标识（前端提交，评论区创建的特殊标识）
 const ADMIN_SUBMIT_UUID = "deda5ce1-2e42-4cf9-bbae-0ce7f2cba55e";
 
-// 站长真实标识（用于存储和验证）
+// 站长真实标识（用于作为站长id存储）
 const ADMIN_UUID = "b4334301-ec79-4176-a1ba-21b9611a3a4a";
 
 // 加载动画 SVG
@@ -35,6 +35,48 @@ const LOADING_SVG = `
           stroke-dashoffset="0.2"/>
 </svg>
 `;
+
+// 发送 Telegram 通知
+async function sendTelegramNotification(env, comment, articleUrl) {
+    if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
+        console.warn('Telegram 通知未配置，跳过发送');
+        return;
+    }
+
+    const message = `
+新评论通知
+
+评论内容: ${comment.content}
+昵称: ${comment.author} ${comment.isAdmin ? '(站长)' : ''}
+网站: ${comment.website || '未提供'}
+文章: ${articleUrl}
+时间: ${new Date(comment.timestamp).toLocaleString()} （UTC）
+
+访问信息：
+IP: ${comment.userInfo.ip}
+UA: ${comment.userInfo.userAgent}
+    `.trim();
+
+    try {
+        const response = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: env.TELEGRAM_CHAT_ID,
+                text: message,
+                disable_web_page_preview: true,
+            }),
+        });
+
+        if (!response.ok) {
+            console.error('Telegram 通知发送失败:', await response.text());
+        }
+    } catch (error) {
+        console.error('Telegram 通知发送错误:', error);
+    }
+}
 
 // HTML 模板
 const HTML_TEMPLATE = (content, hcaptchaSiteKey) => `
@@ -229,6 +271,7 @@ const HTML_TEMPLATE = (content, hcaptchaSiteKey) => `
             }
         }
     </style>
+
 </head>
 <body>
     <div class="container">
@@ -668,7 +711,7 @@ export default {
                 const adminUuid = parts[3];
                 const article = parts.slice(4).join('/');
                 
-                if (adminUuid !== ADMIN_UUID) {
+                if (adminUuid !== ADMIN_SUBMIT_UUID) {
                     return new Response(JSON.stringify({ error: '无权操作' }), {
                         status: 403,
                         headers: { 'Content-Type': 'application/json' }
@@ -752,6 +795,10 @@ export default {
                     
                     // 保存评论
                     await env.BLOG_COMMENTS.put(article, JSON.stringify(comments));
+                    
+                    // 发送 Telegram 通知
+                    const articleUrl = `https://itman-terminal.pages.dev/posts/${encodeURIComponent(article)}`;
+                    await sendTelegramNotification(env, newComment, articleUrl);
                     
                     return new Response(JSON.stringify({ success: true }), {
                         headers: { 'Content-Type': 'application/json' }
